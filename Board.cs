@@ -20,7 +20,7 @@ namespace MinesweeperGame
 
             InitializeBoard();
             PlaceMines();
-            PlaceReward(); // Milestone 2
+            PlaceReward();
             CalculateAdjacentMines();
         }
 
@@ -97,14 +97,23 @@ namespace MinesweeperGame
             return count;
         }
 
-        public void RevealCell(int row, int col)
+        public bool RevealCell(int row, int col)
         {
+            row--;
+            col--;
             if (IsValidCell(row, col) && !Grid[row, col].IsRevealed && !Grid[row, col].IsFlagged)
             {
                 Grid[row, col].IsRevealed = true;
 
-                // If no adjacent mines, reveal neighbors
-                if (Grid[row, col].AdjacentMines == 0 && !Grid[row, col].IsMine)
+                if (Grid[row, col].IsReward)
+                {
+                    ActivateReward(row + 1, col + 1);
+                }
+
+                if (Grid[row, col].IsMine)
+                    return true;
+
+                if (Grid[row, col].AdjacentMines == 0)
                 {
                     for (int r = row - 1; r <= row + 1; r++)
                     {
@@ -112,16 +121,19 @@ namespace MinesweeperGame
                         {
                             if (IsValidCell(r, c))
                             {
-                                RevealCell(r, c);
+                                RevealCell(r + 1, c + 1);
                             }
                         }
                     }
                 }
             }
+            return false;
         }
 
         public void ToggleFlag(int row, int col)
         {
+            row--;
+            col--;
             if (IsValidCell(row, col) && !Grid[row, col].IsRevealed)
             {
                 Grid[row, col].IsFlagged = !Grid[row, col].IsFlagged;
@@ -130,6 +142,8 @@ namespace MinesweeperGame
 
         public void ActivateReward(int row, int col)
         {
+            row--;
+            col--;
             if (IsValidCell(row, col) && Grid[row, col].IsReward && !Grid[row, col].IsRevealed)
             {
                 Grid[row, col].IsRevealed = true;
@@ -169,17 +183,50 @@ namespace MinesweeperGame
 
         public void PrintBoard(bool revealAll = false)
         {
+            Console.Write("    ");
+            for (int c = 0; c < Columns; c++)
+            {
+                Console.Write(" " + (c + 1) + "  ");
+            }
+            Console.WriteLine();
+
+            Console.Write("   ");
+            for (int c = 0; c < Columns; c++)
+            {
+                Console.Write("+---");
+            }
+            Console.WriteLine("+");
+
             for (int r = 0; r < Rows; r++)
             {
+                Console.Write((r + 1).ToString().PadLeft(2) + " |");
                 for (int c = 0; c < Columns; c++)
                 {
-                    if (revealAll)
-                        Grid[r, c].IsRevealed = true;
+                    string content;
+                    if (revealAll) Grid[r, c].IsRevealed = true;
 
-                    Console.Write(Grid[r, c].ToString() + " ");
+                    if (!Grid[r, c].IsRevealed)
+                        content = Grid[r, c].IsFlagged ? "F" : "#";
+                    else if (Grid[r, c].IsMine)
+                        content = "*";
+                    else if (Grid[r, c].IsReward)
+                        content = "$";
+                    else
+                        content = Grid[r, c].AdjacentMines > 0 ? Grid[r, c].AdjacentMines.ToString() : " ";
+
+                    Console.Write(" " + content + " |");
                 }
                 Console.WriteLine();
+
+                Console.Write("   ");
+                for (int c = 0; c < Columns; c++)
+                {
+                    Console.Write("+---");
+                }
+                Console.WriteLine("+");
             }
+
+            Console.WriteLine("\nLegend: # = hidden | F = flag | * = mine | $ = reward\n");
         }
     }
 }
