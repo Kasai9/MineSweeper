@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace MinesweeperGame
 {
@@ -6,49 +6,45 @@ namespace MinesweeperGame
     {
         static void Main(string[] args)
         {
-            Console.WriteLine("Welcome to Minesweeper!");
-            System.Threading.Thread.Sleep(2000);
+            int rows = 8;
+            int cols = 8;
+            int mines = 10;
 
-            Board board = new Board(8, 8, 10);
+            Board board = new Board(rows, cols, mines);
+            bool gameRunning = true;
 
-            string gameState = "ongoing";
-
-            while (gameState == "ongoing")
+            while (gameRunning)
             {
                 Console.Clear();
                 board.PrintBoard();
 
-                Console.WriteLine("\nChoose an action:");
+                string gameState = board.DetermineGameState();
+                if (gameState == "won")
+                {
+                    Console.WriteLine("Congratulations! You've cleared the minefield!");
+                    break;
+                }
+
+                Console.WriteLine("Choose an action:");
                 Console.WriteLine("1 - Visit a cell");
                 Console.WriteLine("2 - Flag or unflag a cell");
                 Console.WriteLine("3 - Use reward");
+                Console.Write("Enter your choice (1-3): ");
+                string choice = Console.ReadLine();
 
-                int row = -1;
-                int col = -1;
-                string choice = "";
+                int col, row;
 
                 try
                 {
-                    Console.Write("Enter your choice (1–3): ");
-                    choice = Console.ReadLine();
+                    Console.Write("Enter column: ");
+                    col = int.Parse(Console.ReadLine());
 
                     Console.Write("Enter row: ");
                     row = int.Parse(Console.ReadLine());
-
-                    Console.Write("Enter column: ");
-                    col = int.Parse(Console.ReadLine());
                 }
-                catch (FormatException)
+                catch
                 {
-                    Console.WriteLine("\nInvalid input. Please enter whole numbers only.");
-                    Console.WriteLine("Press any key to try again...");
-                    Console.ReadKey();
-                    continue;
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"\nUnexpected error: {ex.Message}");
-                    Console.WriteLine("Press any key to try again...");
+                    Console.WriteLine("Invalid input. Press any key to try again.");
                     Console.ReadKey();
                     continue;
                 }
@@ -56,32 +52,32 @@ namespace MinesweeperGame
                 switch (choice)
                 {
                     case "1":
-                        board.RevealCell(row, col);
+                        bool hitMine = board.RevealCell(row, col);
+                        if (hitMine)
+                        {
+                            Console.Clear();
+                            board.PrintBoard(true); // Reveal all
+                            Console.WriteLine("BOOM! You hit a mine. Game over.");
+                            gameRunning = false;
+                        }
                         break;
+
                     case "2":
                         board.ToggleFlag(row, col);
                         break;
+
                     case "3":
                         board.ActivateReward(row, col);
                         break;
+
                     default:
-                        Console.WriteLine("Invalid choice.");
+                        Console.WriteLine("Invalid choice. Press any key to try again.");
                         Console.ReadKey();
                         break;
                 }
-
-                gameState = board.DetermineGameState();
             }
 
-            Console.Clear();
-            board.PrintBoard(true);
-
-            if (gameState == "won")
-                Console.WriteLine("\nYou won!");
-            else if (gameState == "lost")
-                Console.WriteLine("\nYou hit a mine. Game over.");
-
-            Console.WriteLine("\nPress any key to exit...");
+            Console.WriteLine("Press any key to exit...");
             Console.ReadKey();
         }
     }
